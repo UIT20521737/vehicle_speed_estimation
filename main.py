@@ -10,10 +10,11 @@ def find_center(x, y, w, h):
     yc = y + y1
     return (xc, yc)
 
-url = './datasets/video5.mp4'
+# url = './dataset/video.mp4'
+url = './dataset/subset03/video01/video.h264'
 cap = cv2.VideoCapture(url)
 
-object_detector = cv2.createBackgroundSubtractorMOG2(detectShadows=False)
+object_detector = cv2.createBackgroundSubtractorMOG2()
 cen = CentroidTracker()
 
 frame_i = 0
@@ -26,10 +27,14 @@ kernel = np.ones((5, 5), np.uint8)
 
 
 count_id = 0
-max_limit = 15000
-min_limit = 2000
-w_limit = 120
-h_limit = 120
+max_limit = 600
+
+w_limit = 400
+h_limit = 400
+# max_limit = 180
+
+# w_limit = 40
+# h_limit = 40
 while True:
     ret, frame = cap.read()
 
@@ -41,13 +46,17 @@ while True:
     # print(height, width)
     # blur = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (11,11), 0)
+    blur = cv2.GaussianBlur(gray, (3,3), 0)
     roi = blur[200:700,:]
     roi_frame = frame[200:,:]
     
     mask = object_detector.apply(roi)
     _, mask = cv2.threshold(mask, 70, 255, cv2.THRESH_BINARY)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((1,15)))
+    dilation = cv2.dilate(mask, np.ones((3,3)))
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
+    dilation1 = cv2.morphologyEx(dilation, cv2.MORPH_CLOSE, kernel)
+    dilation2 = cv2.morphologyEx(dilation1, cv2.MORPH_CLOSE, kernel)
+    # mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((1,15)))
     contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     print(f"Frame {frame_i}: ")
@@ -56,7 +65,7 @@ while True:
         x, y, w, h = cv2.boundingRect(cnt)
         
         # print(x, y, w, h)
-        if  max_limit >= cv2.contourArea(cnt) >= min_limit or w >= w_limit and h >= h_limit:
+        if max_limit >= w >= w_limit  and max_limit >= h >= h_limit:
             # cv2.drawContours(roi_frame, [cnt], 0, (0,255,0), 2)
             bounding = roi_frame[y:y+h,x:x+w]
             cv2.rectangle(roi_frame, (x, y), (x+w, y+h), (0,255,0), 2)
@@ -120,7 +129,7 @@ while True:
     cv2.imshow('roi', roi_frame)
     cv2.imshow('frame', frame)
     # cv2.imshow('blur', blur)
-    cv2.imshow('mask', mask)
+    cv2.imshow('mask', dilation2)
     output.write(frame)
     
 
