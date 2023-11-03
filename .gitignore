@@ -1,0 +1,17 @@
+.venv/
+
+binary_img/
+
+blur_img/
+
+new_mask/
+
+output_video/
+
+mask/
+
+img/
+
+gray_img/
+
+datasets/
