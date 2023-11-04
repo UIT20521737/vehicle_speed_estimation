@@ -11,8 +11,12 @@ def find_center(x, y, w, h):
     return (xc, yc)
 
 # url = './dataset/video.mp4'
+
 # url = './dataset/subset03/video01/video.h264'
 url = './datasets/video5.mp4'
+
+# url = './dataset/subset01/video01/video.h264'
+
 cap = cv2.VideoCapture(url)
 
 object_detector = cv2.createBackgroundSubtractorMOG2()
@@ -48,8 +52,8 @@ while True:
     # blur = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (3,3), 0)
-    roi = blur[200:700,:]
-    roi_frame = frame[200:,:]
+    roi = blur
+    roi_frame = frame
     
     mask = object_detector.apply(roi)
     _, mask = cv2.threshold(mask, 70, 255, cv2.THRESH_BINARY)
