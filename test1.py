@@ -64,7 +64,7 @@ while True:
     dilation2 = cv2.morphologyEx(dilation1, cv2.MORPH_CLOSE, kernel)
     # mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((1,15)))
     contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    print(f"Frame {frame_i}: ")
+    print(f"Frame {count}: ")
     center_points_cur_frame = []
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
@@ -79,43 +79,42 @@ while True:
             cv2.imwrite(f'./new_mask/{frame_i}.jpg',  roi_frame[y:y+h,x:x+w])
             center = find_center(x, y, w, h)
             center_points_cur_frame.append(center)
-    
+    # Add new IDs found
+    for pt in center_points_cur_frame:
+        tracking_objects[track_id] = pt
+        track_id += 1
     # Only at the beginning we compare previous and current frame
-    if count <= 2:
-        for pt in center_points_cur_frame:
-            for pt2 in center_points_prev_frame:
-                distance = math.hypot(pt2[0] - pt[0], pt2[1] - pt[1])
 
-                if 0 <= distance <= 2000:
-                    tracking_objects[track_id] = pt
-                    track_id += 1
-    else:
+    tracking_objects_copy = tracking_objects.copy()
+    center_points_cur_frame_copy = center_points_cur_frame.copy()
 
-        tracking_objects_copy = tracking_objects.copy()
-        center_points_cur_frame_copy = center_points_cur_frame.copy()
+    for object_id, pt2 in tracking_objects_copy.items():
+        # object_exists = False
+        distance_array = []
+        for pt in center_points_cur_frame_copy:
+            distance = math.hypot(pt2[0] - pt[0], pt2[1] - pt[1])
+            distance_array.append({
+                "distance" : distance,
+                "point" : pt,
+                "isExist" : False
+            })
+        print(">>>distance_array: ", distance_array)
+        for pt in center_points_cur_frame_copy:
+            item = min(distance_array, key=lambda x: x["distance"])  
+            tracking_objects[object_id] = item["point"]
+            # if distance < min:
+            #     min = distance
+            # print(">>>center_points_cur_frame: ",center_points_cur_frame )
+            # print(">>>center_points_prev_frame: ",center_points_prev_frame )  
+            # print(">>>min", min)  
+            # # Update IDs position
+            # 
+        # Remove IDs lost
+        # if not object_exists or center_points_prev_frame:
+        #     tracking_objects.pop(object_id)
+        print(">>>tracking_objects", tracking_objects)
 
-        for object_id, pt2 in tracking_objects_copy.items():
-            object_exists = False
-            for pt in center_points_cur_frame_copy:
-                distance = math.hypot(pt2[0] - pt[0], pt2[1] - pt[1])
-
-                # Update IDs position
-                if 0 <= distance <= 2000:
-                    tracking_objects[object_id] = pt
-                    object_exists = True
-                    if pt in center_points_cur_frame:
-                        center_points_cur_frame.remove(pt)
-                    continue
-
-            # Remove IDs lost
-            if not object_exists or center_points_prev_frame:
-                tracking_objects.pop(object_id)
-            
-
-        # Add new IDs found
-        for pt in center_points_cur_frame:
-            tracking_objects[track_id] = pt
-            track_id += 1
+        
 
     for object_id, pt in tracking_objects.items():
         cv2.circle(roi_frame, pt, 5, (0, 0, 255), -1)

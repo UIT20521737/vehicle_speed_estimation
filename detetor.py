@@ -11,7 +11,8 @@ def find_center(x, y, w, h):
     return (xc, yc)
 
 # url = './dataset/video.mp4'
-url = './dataset/subset01/video03/video.h264'
+url = './dataset/subset02/subset02a/video04/video.h264'
+# url = './dataset/subset01/video04/video.h264'
 cap = cv2.VideoCapture(url)
 
 object_detector = cv2.createBackgroundSubtractorMOG2()
@@ -27,16 +28,15 @@ kernel = np.ones((5, 5), np.uint8)
 
 
 count_id = 0
-max_limit = 500
-w_limit = 200
-h_limit = 200
-# max_limit = 180
+max_limit = 700
 
-# w_limit = 40
-# h_limit = 40
+w_limit = 300
+h_limit = 300
+# max_limit = 150
 
+# w_limit = 60
+# h_limit = 60
 count = 0
-
 center_points_prev_frame = []
 tracking_objects = {}
 track_id = 0
@@ -79,57 +79,8 @@ while True:
             cv2.imwrite(f'./new_mask/{frame_i}.jpg',  roi_frame[y:y+h,x:x+w])
             center = find_center(x, y, w, h)
             center_points_cur_frame.append(center)
-    
-    # Only at the beginning we compare previous and current frame
-    if count <= 2:
-        for pt in center_points_cur_frame:
-            for pt2 in center_points_prev_frame:
-                distance = math.hypot(pt2[0] - pt[0], pt2[1] - pt[1])
-
-                if 0 <= distance <= 2000:
-                    tracking_objects[track_id] = pt
-                    track_id += 1
-    else:
-
-        tracking_objects_copy = tracking_objects.copy()
-        center_points_cur_frame_copy = center_points_cur_frame.copy()
-
-        for object_id, pt2 in tracking_objects_copy.items():
-            object_exists = False
-            for pt in center_points_cur_frame_copy:
-                distance = math.hypot(pt2[0] - pt[0], pt2[1] - pt[1])
-
-                # Update IDs position
-                if 0 <= distance <= 2000:
-                    tracking_objects[object_id] = pt
-                    object_exists = True
-                    if pt in center_points_cur_frame:
-                        center_points_cur_frame.remove(pt)
-                    continue
-
-            # Remove IDs lost
-            if not object_exists or center_points_prev_frame:
-                tracking_objects.pop(object_id)
-            
-
-        # Add new IDs found
-        for pt in center_points_cur_frame:
-            tracking_objects[track_id] = pt
-            track_id += 1
-
-    for object_id, pt in tracking_objects.items():
-        cv2.circle(roi_frame, pt, 5, (0, 0, 255), -1)
-        cv2.putText(roi_frame, str(object_id), (pt[0], pt[1] - 7), 0, 1, (0, 0, 255), 2)
-    
-    print("Tracking objects")
-    print(tracking_objects)
-
-
-    print("CUR FRAME LEFT PTS")
-    print(center_points_cur_frame)
-
-
     cv2.imshow("Frame", frame)
+    cv2.imshow('mask', dilation2)
     cv2.imwrite(f'output/{frame_count}.jpg', roi_frame)
     frame_count += 1
     # Make a copy of the points

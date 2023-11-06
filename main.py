@@ -11,7 +11,7 @@ def find_center(x, y, w, h):
     return (xc, yc)
 
 # url = './dataset/video.mp4'
-url = './dataset/subset01/video01/video.h264'
+url = './dataset/subset01/video03/video.h264'
 cap = cv2.VideoCapture(url)
 
 object_detector = cv2.createBackgroundSubtractorMOG2()
@@ -27,10 +27,10 @@ kernel = np.ones((5, 5), np.uint8)
 
 
 count_id = 0
-max_limit = 600
+max_limit = 500
 
-w_limit = 400
-h_limit = 400
+w_limit = 200
+h_limit = 200
 # max_limit = 180
 
 # w_limit = 40
@@ -46,13 +46,13 @@ while True:
     # print(height, width)
     # blur = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (3,3), 0)
+    blur = cv2.GaussianBlur(gray, (7,7), 0)
     roi = blur
     roi_frame = frame
     
     mask = object_detector.apply(roi)
-    _, mask = cv2.threshold(mask, 70, 255, cv2.THRESH_BINARY)
-    dilation = cv2.dilate(mask, np.ones((3,3)))
+    _, mask = cv2.threshold(mask, 120, 255, cv2.THRESH_BINARY)
+    dilation = cv2.dilate(mask, np.ones((5,5)))
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
     dilation1 = cv2.morphologyEx(dilation, cv2.MORPH_CLOSE, kernel)
     dilation2 = cv2.morphologyEx(dilation1, cv2.MORPH_CLOSE, kernel)
