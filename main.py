@@ -12,6 +12,13 @@ def find_center(x, y, w, h):
 
 # url = './dataset/video.mp4'
 url = './dataset/subset01/video03/video.h264'
+
+# url = './dataset/subset03/video01/video.h264'
+# url = './datasets/video5.mp4'
+
+# url = './dataset/subset01/video01/video.h264'
+
+
 cap = cv2.VideoCapture(url)
 
 object_detector = cv2.createBackgroundSubtractorMOG2()
@@ -27,10 +34,17 @@ kernel = np.ones((5, 5), np.uint8)
 
 
 count_id = 0
+
 max_limit = 500
 
 w_limit = 200
 h_limit = 200
+
+# max_limit = 120
+
+# w_limit = 60
+# h_limit = 60
+
 # max_limit = 180
 
 # w_limit = 40

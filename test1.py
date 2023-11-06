@@ -100,7 +100,8 @@ while True:
             })
         print(">>>distance_array: ", distance_array)
         for pt in center_points_cur_frame_copy:
-            item = min(distance_array, key=lambda x: x["distance"])  
+            item = min(distance_array, key=lambda x: x["distance"]) 
+            index = True 
             tracking_objects[object_id] = item["point"]
             # if distance < min:
             #     min = distance
