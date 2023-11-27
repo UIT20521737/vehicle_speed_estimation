@@ -80,6 +80,7 @@ while True:
             center = find_center(x, y, w, h)
             center_points_cur_frame.append(center)
     # Add new IDs found
+    
     for pt in center_points_cur_frame:
         tracking_objects[track_id] = pt
         track_id += 1
@@ -101,7 +102,8 @@ while True:
         print(">>>distance_array: ", distance_array)
         for pt in center_points_cur_frame_copy:
             item = min(distance_array, key=lambda x: x["distance"]) 
-            index = True 
+            item["isExist"] = True
+            # if item["isExist"] == True:
             tracking_objects[object_id] = item["point"]
             # if distance < min:
             #     min = distance
