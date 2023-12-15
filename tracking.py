@@ -1,6 +1,6 @@
-
+d = 0 
 tracking_points = []
-id = 0
+id = 1
 time_life = 15
 # Frame 65: 
 # (569, 365)
@@ -20,12 +20,13 @@ def dang_ki(point):
     global id
     tracking_points.append({
                 "point": point,
+                "distance": d,
                 "isExist": True,
                 "id": id,
                 "life_cycle": time_life
                 })
     id += 1
-    print(">>> id tracking: ", id)
+    # print(">>> id tracking: ", id)
    
 def cap_nhap(centers):
     if tracking_points == []:
@@ -35,7 +36,7 @@ def cap_nhap(centers):
     else:
         for point in tracking_points:
             point['life_cycle'] -= 1
-            if 430 <= point['point'][1] <= 450:
+            if 430//3 <= point['point'][1] <= 450//3:
                 xoa(point['point'])
         # print(f">>> con laij gi", tracking_points)
         tracking_points_copy = tracking_points.copy()
@@ -50,23 +51,28 @@ def cap_nhap(centers):
             for center in centers:
                 (x1,y1) = center
                 d = ((x1 - x)**2 + (y1 - y)**2)**0.5
+                
                 distances.append(d)
             min_distance = min(distances)
             index_min_distance = distances.index(min_distance)
             index = tracking_points.index(pt)
-            if min_distance < 400:
+            if min_distance < 450//3:
                 tracking_points[index]["life_cycle"] +=1
+                tracking_points[index]["distance"] = distances[index_min_distance]
                 tracking_points[index]["point"] = centers[index_min_distance]
+                # print(">>>>>>>",tracking_points[index]["distance"])
+                # print(">>>",distances[index_min_distance])
                 del centers[index_min_distance]
         for pt in tracking_points:  
             index = tracking_points.index(pt)
             if tracking_points[index]["life_cycle"] <= 0:
                 xoa(tracking_points[index]["point"])
                 
-        print(">>> con lai tracking_points ",tracking_points)
+                
+        # print(">>> con lai tracking_points ",tracking_points)
         if len(centers) != 0:
             for center in centers:
-                print(f">>> center_point_tracking: {(center[0], center[1])}")    
+                # print(f">>> center_point_tracking: {(center[0], center[1])}")    
                 dang_ki(center)   
                
 def xoa(point):
