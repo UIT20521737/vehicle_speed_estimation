@@ -56,7 +56,7 @@ def cap_nhap(centers):
             min_distance = min(distances)
             index_min_distance = distances.index(min_distance)
             index = tracking_points.index(pt)
-            if min_distance < 450//3:
+            if min_distance < 350//3:
                 tracking_points[index]["life_cycle"] +=1
                 tracking_points[index]["distance"] = distances[index_min_distance]
                 tracking_points[index]["point"] = centers[index_min_distance]
