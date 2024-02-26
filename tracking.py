@@ -21,9 +21,10 @@ def dang_ki(point):
     tracking_points.append({
                 "point": point,
                 "distance": d,
-                "isExist": True,
+                "check_calc_speed": False,
                 "id": id,
-                "life_cycle": time_life
+                "life_cycle": time_life,
+                "speed":0
                 })
     id += 1
     # print(">>> id tracking: ", id)
@@ -31,18 +32,18 @@ def dang_ki(point):
 def cap_nhap(centers):
     if tracking_points == []:
         for center in centers:
-            print(f">>> center_point_tracking: {(center[0], center[1])}")
+            # print(f">>> center_point_tracking: {(center[0], center[1])}")
             dang_ki(center)       
     else:
         for point in tracking_points:
             point['life_cycle'] -= 1
-            if 430//3 <= point['point'][1] <= 450//3:
+            if 39 <= point['point'][0] <= 41:
                 xoa(point['point'])
         # print(f">>> con laij gi", tracking_points)
-        tracking_points_copy = tracking_points.copy()
+        # tracking_points_copy = tracking_points.copy()
         # print(f">>> con laij gi copy", tracking_points_copy)
         
-        for pt in tracking_points_copy:
+        for pt in tracking_points:
             (x,y) = pt['point']
             distances = []
             if centers == []:
@@ -51,12 +52,13 @@ def cap_nhap(centers):
             for center in centers:
                 (x1,y1) = center
                 d = ((x1 - x)**2 + (y1 - y)**2)**0.5
-                
+               
                 distances.append(d)
             min_distance = min(distances)
             index_min_distance = distances.index(min_distance)
             index = tracking_points.index(pt)
             if min_distance < 350//3:
+                
                 tracking_points[index]["life_cycle"] +=1
                 tracking_points[index]["distance"] = distances[index_min_distance]
                 tracking_points[index]["point"] = centers[index_min_distance]

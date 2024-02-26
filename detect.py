@@ -12,19 +12,18 @@ def find_center(x, y, w, h):
     yc = y + y1
     return (xc, yc)
 for i in range(2,3):
-    for j in range (1,7):
-        url = f'./dataset/subset0{i}/video0{j}/video.h264'
+    for j in range (6,12):
+        url = f'./dataset/subset0{i}/video{j:02}/video.h264'
         cap = cv2.VideoCapture(url)
         fps = cap.get(cv2.CAP_PROP_FPS)
         object_detector = cv2.createBackgroundSubtractorMOG2(history=5)
 
-
+        
         frame_i = 0
         frame_width = int(cap.get(3))
         frame_height = int(cap.get(4))
         frame_size = (frame_width,frame_height)
         output = cv2.VideoWriter('./output_video/output.mp4', cv2.VideoWriter_fourcc('M','J','P','G'), 30, frame_size)
-
         kernel = np.ones((5, 5), np.uint8)
 
 
@@ -86,7 +85,7 @@ for i in range(2,3):
             for cnt in contours:
                 
                 x, y, w, h = cv2.boundingRect(cnt)
-                if w_max >= w >= w_limit  and h_max >= h >= h_limit and y >= 250//3 and w*h >11000:
+                if w_max >= w >= w_limit  and h_max >= h >= h_limit and y >= 30:
                     # with open('w.txt', 'a',  encoding='UTF-8') as file:
                     #     file.write(f'{w}\n')
                     # with open('h.txt', 'a',  encoding='UTF-8') as files:
@@ -96,7 +95,7 @@ for i in range(2,3):
                     #         filess.write(f"{point['id']}_{w*h}\n")
                     bounding = roi_frame[y:y+h,x:x+w]
                     cv2.rectangle(roi_frame, (x, y), (x+w, y+h), (0,255,0), 5)
-                    cv2.imshow('car', mask[y:y+h,x:x+w])
+                    # cv2.imshow('car', mask[y:y+h,x:x+w])
                     car += 1
                     center = find_center(x, y, w, h)
                     print(">>> center",center)
@@ -105,25 +104,32 @@ for i in range(2,3):
                     
             
             for point in tracking_points:
-                print(">>> id: ",point['id'],"life_cycle: ",point["life_cycle"])
+                # print(point)
                 cv2.circle(roi_frame, point['point'],5, (0,0,255), -1)
                 cv2.putText(roi_frame, f"#id {point['id']}", (point['point'][0]-10,point['point'][1]-10),
                             cv2.FONT_HERSHEY_SIMPLEX, 1,color =(0,0,255), thickness = 2)
-                speed = (point['distance'] * fps * 60 * 60) / (100 * 1000)
-                speed = round(speed, 2)
+                
                 # with open('ketquaspeed.txt', 'a',  encoding='UTF-8') as file:
                 #     file.write(f"xe id: {point['id']} speed: {speed}\n")
-                cv2.putText(roi_frame, f"#speed {speed}", (point['point'][0]-40,point['point'][1]-40),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1,color =(0,255,255), thickness = 2)
                 
                 
-            roi_frame = cv2.line(roi_frame, (0,150//3), (roi_frame.shape[1], 150//3), (0,0,255), thickness= 3)
-            roi_frame = cv2.line(roi_frame, (0,430//3), (roi_frame.shape[1], 430//3), (0,255,255), thickness= 3)
+                if frame_count % 50 ==0 or point["speed"] == 0:
+                    x = point['distance']
+                    point["speed"] = (x * fps * 0.03 * 3.6)
+                    point["speed"] = round(point["speed"], 2)
+                if x <300:
+                    cv2.putText(frame, f"#speed {point['speed']}", (point['point'][0]-40,point['point'][1]-40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1,color =(0,255,255), thickness = 2)
+        
+            # print(frame.shape)    
+            roi_frame = cv2.line(roi_frame, (0,30), (roi_frame.shape[1], 30), (0,0,255), thickness= 3)
+            roi_frame = cv2.line(roi_frame, (0,300), (roi_frame.shape[1], 300), (0,0,255), thickness= 3)
+           
 
-            
-            
+            cv2.imwrite(f"output_frame/SET{i}/video{j}/{frame_count}.jpg", frame)
+            # cv2.imshow(f"gray", gray)
             cv2.imshow(f"video{j}", frame)
-            cv2.imshow('mask', dilation2)
+            # cv2.imshow('mask', dilation2)
             frame_count += 1
             center_points_prev_frame = center_points_cur_frame.copy()
         print("tong so phuong tien: {j}", tracking.id)
