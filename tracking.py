@@ -2,20 +2,6 @@ d = 0
 tracking_points = []
 id = 1
 time_life = 15
-# Frame 65: 
-# (569, 365)
-# Frame 66: 
-# (1662, 890)
-# (563, 336)
-
-# Frame 292:
-# (393, 243)
-# (1286, 194)
-# (1691, 153)
-# Frame 293:
-# (1273, 168)
-# (411, 202)
-# DANG KI
 def dang_ki(point):
     global id
     tracking_points.append({
@@ -27,7 +13,7 @@ def dang_ki(point):
                 "speed":0
                 })
     id += 1
-    # print(">>> id tracking: ", id)
+
    
 def cap_nhap(centers):
     if tracking_points == []:
@@ -37,12 +23,7 @@ def cap_nhap(centers):
     else:
         for point in tracking_points:
             point['life_cycle'] -= 1
-            if 39 <= point['point'][0] <= 41:
-                xoa(point['point'])
-        # print(f">>> con laij gi", tracking_points)
-        # tracking_points_copy = tracking_points.copy()
-        # print(f">>> con laij gi copy", tracking_points_copy)
-        
+
         for pt in tracking_points:
             (x,y) = pt['point']
             distances = []
@@ -69,9 +50,6 @@ def cap_nhap(centers):
             index = tracking_points.index(pt)
             if tracking_points[index]["life_cycle"] <= 0:
                 xoa(tracking_points[index]["point"])
-                
-                
-        # print(">>> con lai tracking_points ",tracking_points)
         if len(centers) != 0:
             for center in centers:
                 # print(f">>> center_point_tracking: {(center[0], center[1])}")    
