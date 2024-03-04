@@ -11,8 +11,8 @@ def find_center(x, y, w, h):
     xc = x + x1
     yc = y + y1
     return (xc, yc)
-for i in range(2,3):
-    for j in range (6,12):
+for i in range(1,2):
+    for j in range (1,2):
         url = f'./dataset/subset0{i}/video{j:02}/video.h264'
         cap = cv2.VideoCapture(url)
         fps = cap.get(cv2.CAP_PROP_FPS)
