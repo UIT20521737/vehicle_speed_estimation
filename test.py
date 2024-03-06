@@ -1,151 +1,137 @@
 import cv2
-import dlib
-import time
+import numpy as np
 import math
+from tracking import cap_nhap, tracking_points
+import tracking
 
-#Classifier File
-carCascade = cv2.CascadeClassifier("vech.xml")
 
-#Video file capture
-video = cv2.VideoCapture("carsVideo.mp4")
-
-# Constant Declaration
-WIDTH =1280
-HEIGHT = 720
-
-#estimate speed function
-def estimateSpeed(location1, location2):
-    d_pixels = math.sqrt(math.pow(location2[0] - location1[0], 2) + math.pow(location2[1] - location1[1], 2))
-    ppm = 1
-    d_meters = d_pixels / ppm
-    fps = 18
-    speed = d_meters * fps * 3.6
-    return speed
-
-#tracking multiple objects
-def trackMultipleObjects():
-    rectangleColor = (0, 255, 255)
-    frameCounter = 0
-    currentCarID = 0
-    fps = 0
-
-    carTracker = {}
-    carNumbers = {}
-    carLocation1 = {}
-    carLocation2 = {}
-    speed = [None] * 1000
-
-    out = cv2.VideoWriter('outTraffic.avi', cv2.VideoWriter_fourcc('M','J','P','G'), 10, (WIDTH, HEIGHT))
-
-    while True:
-        start_time = time.time()
-        rc, image = video.read()
-        if type(image) == type(None):
-            break
-
-        image = cv2.resize(image, (WIDTH, HEIGHT))
-        resultImage = image.copy()
-
-        frameCounter = frameCounter + 1
-        carIDtoDelete = []
-
-        for carID in carTracker.keys():
-            trackingQuality = carTracker[carID].update(image)
-
-            if trackingQuality < 7:
-                carIDtoDelete.append(carID)
+def find_center(x, y, w, h):
+    x1 = int(w/2)
+    y1 = int(h/2)
+    xc = x + x1
+    yc = y + y1
+    return (xc, yc)
+for i in range(1,2):
+    for j in range (1,2):
+        url = f'./dataset/subset0{i}/video{j:02}/video.h264'
+        cap = cv2.VideoCapture(url)
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        object_detector = cv2.createBackgroundSubtractorMOG2(history=5)
 
         
-        for carID in carIDtoDelete:
-            print("Removing carID " + str(carID) + ' from list of trackers. ')
-            print("Removing carID " + str(carID) + ' previous location. ')
-            print("Removing carID " + str(carID) + ' current location. ')
-            carTracker.pop(carID, None)
-            carLocation1.pop(carID, None)
-            carLocation2.pop(carID, None)
+        frame_i = 0
+        frame_width = int(cap.get(3))
+        frame_height = int(cap.get(4))
+        frame_size = (frame_width,frame_height)
+        output = cv2.VideoWriter('./output_video/output.mp4', cv2.VideoWriter_fourcc('M','J','P','G'), 30, frame_size)
+        kernel = np.ones((5, 5), np.uint8)
 
+
+        count_id = 0
+        w_max = 270
+        h_max = 310
+        w_limit = 60
+        h_limit = 140
+        # max_limit = 150
+
+        # w_limit = 60
+        # h_limit = 60
+        count = 0
+        center_points_prev_frame = []
+        tracking_objects = {}
+        track_id = 0
+        frame_count = 0
+        cout = 0
+        car = 0
+        k = 0
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15,3))
+
+
+        while True:
+            ret, frame = cap.read()
+            
+            count += 1
+            key = cv2.waitKey(10)
+            if not ret or key == ord('q'):
+                break
+            frame = cv2.resize(frame, (frame.shape[1]//3, frame.shape[0]//3), frame)
+            # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            height, width, _ = frame.shape
+            # print(height, width)
+            # blur = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            median = cv2.medianBlur(gray, 7)
+            blur = cv2.GaussianBlur(median, (5,5), 0)
         
-        if not (frameCounter % 10):
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            cars = carCascade.detectMultiScale(gray, 1.1, 13, 18, (24, 24))
+            roi = blur
+            roi_frame = frame
+            mask = object_detector.apply(roi)
+            _, mask = cv2.threshold(mask, 120, 255, cv2.THRESH_BINARY)
+            dilation = cv2.morphologyEx(mask, cv2.MORPH_DILATE, np.ones((15,15)))
+            dilation1 = cv2.morphologyEx(dilation, cv2.MORPH_CLOSE, kernel)   
+            dilation2 = cv2.morphologyEx(dilation1, cv2.MORPH_ERODE, np.ones((15,15)))
+            
+            # dilation = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+            # dilation1 = cv2.morphologyEx(dilation, cv2.MORPH_DILATE, np.ones((5,5)))
+            # dilation2 = cv2.morphologyEx(dilation1, cv2.MORPH_CLOSE, kernel)
+                
+            # dilation2 = cv2.dilate(dilation1, np.ones((5,5)))
+            # mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((1,15)))
+            analysis = cv2.connectedComponentsWithStats(dilation2,4, cv2.CV_32S) 
+            (totalLabels, label_ids, values, centroid) = analysis 
+            
 
-            for (_x, _y, _w, _h) in cars:
-                x = int(_x)
-                y = int(_y)
-                w = int(_w)
-                h = int(_h)
-
-                x_bar = x + 0.5 * w
-                y_bar = y + 0.5 * h
-
-                matchCarID = None
-
-                for carID in carTracker.keys():
-                    trackedPosition = carTracker[carID].get_position()
-
-                    t_x = int(trackedPosition.left())
-                    t_y = int(trackedPosition.top())
-                    t_w = int(trackedPosition.width())
-                    t_h = int(trackedPosition.height())
-
-                    t_x_bar = t_x + 0.5 * t_w
-                    t_y_bar = t_y + 0.5 * t_h
-
-                    if ((t_x <= x_bar <= (t_x + t_w)) and (t_y <= y_bar <= (t_y + t_h)) and (x <= t_x_bar <= (x + w)) and (y <= t_y_bar <= (y + h))):
-                        matchCarID = carID
-
-                if matchCarID is None:
-                    print(' Creating new tracker' + str(currentCarID))
-
-                    tracker = dlib.correlation_tracker()
-                    tracker.start_track(image, dlib.rectangle(x, y, x + w, y + h))
-
-                    carTracker[currentCarID] = tracker
-                    carLocation1[currentCarID] = [x, y, w, h]
-
-                    currentCarID = currentCarID + 1
-
-        for carID in carTracker.keys():
-            trackedPosition = carTracker[carID].get_position()
-
-            t_x = int(trackedPosition.left())
-            t_y = int(trackedPosition.top())
-            t_w = int(trackedPosition.width())
-            t_h = int(trackedPosition.height())
-
-            cv2.rectangle(resultImage, (t_x, t_y), (t_x + t_w, t_y + t_h), rectangleColor, 4)
-
-            carLocation2[carID] = [t_x, t_y, t_w, t_h]
-
-        end_time = time.time()
-
-        if not (end_time == start_time):
-            fps = 1.0/(end_time - start_time)
-
-        for i in carLocation1.keys():
-            if frameCounter % 1 == 0:
-                [x1, y1, w1, h1] = carLocation1[i]
-                [x2, y2, w2, h2] = carLocation2[i]
-
-                carLocation1[i] = [x2, y2, w2, h2]
-
-                if [x1, y1, w1, h1] != [x2, y2, w2, h2]:
-                    if (speed[i] == None or speed[i] == 0) and y1 >= 275 and y1 <= 285:
-                        speed[i] = estimateSpeed([x1, y1, w1, h1], [x1, y2, w2, h2])
-
-                    if speed[i] != None and y1 >= 180:
-                        cv2.putText(resultImage, str(int(speed[i])) + "km/h", (int(x1 + w1/2), int(y1-5)), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 100) ,2)
-
-        cv2.imshow('result', resultImage)
-
-        out.write(resultImage)
-
-        if cv2.waitKey(1) == 27:
-            break
-
+            print(f"Frame {frame_count}: ")
+            center_points_cur_frame = []
+            print(f"{centroid = }")
+            for i in range(1, totalLabels): 
     
-    cv2.destroyAllWindows()
-    out.release()
+      # Area of the component 
+                area = values[i, cv2.CC_STAT_AREA]  
+                x = values[i, cv2.CC_STAT_LEFT] 
+                y = values[i, cv2.CC_STAT_TOP] 
+                w = values[i, cv2.CC_STAT_WIDTH] 
+                h = values[i, cv2.CC_STAT_HEIGHT]
+                if w_max >= w >= w_limit  and h_max >= h >= h_limit and y >= 30: 
+                    cv2.rectangle(roi_frame, (x, y), (x+w, y+h), (0,255,0), 5)
+                    cv2.imshow('car', dilation2[y:y+h,x:x+w])
+                    center_point = (int(centroid[i][0]), int(centroid[i][1]))
+                    center_points_cur_frame.append(center_point) 
+                    print("center_points_cur_frame = ",center_points_cur_frame)
+            cap_nhap(center_points_cur_frame)        
+            for point in tracking_points:
+                # print(point)
+                cv2.circle(roi_frame, point['point'],5, (0,0,255), -1)
+                cv2.putText(roi_frame, f"#id {point['id']}", (point['point'][0]-10,point['point'][1]-10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1,color =(0,0,255), thickness = 2)
+                
+                # with open('ketquaspeed.txt', 'a',  encoding='UTF-8') as file:
+                #     file.write(f"xe id: {point['id']} speed: {speed}\n")
+                
+                
+                if frame_count % 50 ==0 or point["speed"] == 0:
+                    x = point['distance']
+                    point["speed"] = (x * fps * 0.03 * 3.6)
+                    point["speed"] = round(point["speed"], 2)
+                if x <300:
+                    cv2.putText(frame, f"#speed {point['speed']}", (point['point'][0]-40,point['point'][1]-40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1,color =(0,255,255), thickness = 2)
+        
+            print(frame.shape)    
+            roi_frame = cv2.line(roi_frame, (0,30), (roi_frame.shape[1], 30), (0,0,255), thickness= 3)
+            roi_frame = cv2.line(roi_frame, (0,300), (roi_frame.shape[1], 300), (0,0,255), thickness= 3)
+           
 
-if __name__ == '__main__':
-    trackMultipleObjects()
+            # cv2.imwrite(f"output_frame/SET{i}/video{j}/{frame_count}.jpg", frame)
+            # cv2.imshow(f"gray", gray)
+            cv2.imshow(f"video{j}", frame)
+            
+            # cv2.imshow('mask', dilation2)
+            frame_count += 1
+            # center_points_prev_frame = center_points_cur_frame.copy()
+        # print("tong so phuong tien: {j}", tracking.id)
+        # with open('ketqua.txt', 'a',  encoding='UTF-8') as file:
+        #     file.write(f'tong so phuong tien của set{i} video {j}: {tracking.id}\n')
+        tracking.id = 0
+        cap.release()
+        cv2.destroyAllWindows()

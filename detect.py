@@ -10,9 +10,9 @@ def find_center(x, y, w, h):
     y1 = int(h/2)
     xc = x + x1
     yc = y + y1
-    return (xc, yc)                      
-for i in range(1,2):
-    for j in range (1,3):
+    return (xc, yc)
+for i in range(2,3):
+    for j in range (6,12):
         url = f'./dataset/subset0{i}/video{j:02}/video.h264'
         cap = cv2.VideoCapture(url)
         fps = cap.get(cv2.CAP_PROP_FPS)
@@ -82,7 +82,7 @@ for i in range(1,2):
             print(f"Frame {frame_count}: ")
             center_points_cur_frame = []
             for ccl in range(1, totalLabels): 
-                area = values[ccl, cv2.CC_STAT_AREA]   m 
+                area = values[ccl, cv2.CC_STAT_AREA]  
                 x = values[ccl, cv2.CC_STAT_LEFT] 
                 y = values[ccl, cv2.CC_STAT_TOP] 
                 w = values[ccl, cv2.CC_STAT_WIDTH] 
