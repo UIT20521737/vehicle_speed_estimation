@@ -82,7 +82,7 @@ for i in range(1,2):
             print(f"Frame {frame_count}: ")
             center_points_cur_frame = []
             for ccl in range(1, totalLabels): 
-                area = values[ccl, cv2.CC_STAT_AREA]  
+                area = values[ccl, cv2.CC_STAT_AREA]   m 
                 x = values[ccl, cv2.CC_STAT_LEFT] 
                 y = values[ccl, cv2.CC_STAT_TOP] 
                 w = values[ccl, cv2.CC_STAT_WIDTH] 
