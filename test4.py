@@ -1,39 +1,21 @@
 import cv2
-import xml.etree.ElementTree as ET
+import numpy as np
 
-# Đọc tập tin XML
-tree = ET.parse('./dataset/subset01/video01/vehicles.xml')
-root = tree.getroot()
+# Ma trận ban đầu 6x6
+matrix_6x6 = np.array([
+    [10, 20, 30, 40, 50, 60],
+    [15, 25, 35, 45, 55, 65],
+    [12, 22, 32, 42, 52, 62],
+    [18, 28, 38, 48, 58, 68],
+    [14, 24, 34, 44, 54, 64],
+    [16, 26, 36, 46, 56, 66]
+], dtype=np.uint8)  # Chú ý cung cấp kiểu dữ liệu uint8 cho ma trận
 
-# Đọc video
-video_path = './dataset/subset01/video01/video.h264'
-cap = cv2.VideoCapture(video_path)
+# Chuyển đổi ma trận thành hình ảnh để sử dụng cv2.resize
+image = np.uint8(matrix_6x6)
 
-while cap.isOpened():
-    ret, frame = cap.read()
-    if not ret:
-        break
+# Resize bằng bilinear interpolation về kích thước 4x4
+new_matrix_4x4 = cv2.resize(image, (4, 4), interpolation=cv2.INTER_LINEAR)
 
-    # Lặp qua các phương tiện trong tập tin XML
-    for vehicle in root.findall('.//vehicle'):
-        region = vehicle.find('region')
-        if region is not None and 'x' in region.attrib:
-            x = int(region.attrib['x'])
-            y = int(region.attrib['y'])
-            w = int(region.attrib['w'])
-            h = int(region.attrib['h'])
-            print(f"x: {x}, y: {y}, w: {w}, h: {h}")
-
-            # Vẽ hình chữ nhật lên bức hình copy
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
-
-    # Hiển thị ảnh với các hình chữ nhật đã vẽ
-    cv2.imshow('Result',frame)
-
-    # Nếu bạn muốn thoát khi nhấn 'q'
-    if cv2.waitKey(25) & 0xFF == ord('q'):
-        break
-
-# Giải phóng các tài nguyên
-cap.release()
-cv2.destroyAllWindows()
+print("Ma trận mới 4x4:")
+print(new_matrix_4x4)
